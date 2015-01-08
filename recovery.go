@@ -1,44 +1,42 @@
-package martini
+package cocktail
 
 import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"runtime"
-
-	"github.com/codegangsta/inject"
 )
 
 const (
-	panicHtml = `<html>
-<head><title>PANIC: %s</title>
-<style type="text/css">
-html, body {
-	font-family: "Roboto", sans-serif;
-	color: #333333;
-	background-color: #ea5343;
-	margin: 0px;
-}
-h1 {
-	color: #d04526;
-	background-color: #ffffff;
-	padding: 20px;
-	border-bottom: 1px dashed #2b3848;
-}
-pre {
-	margin: 20px;
-	padding: 20px;
-	border: 2px solid #2b3848;
-	background-color: #ffffff;
-}
-</style>
-</head><body>
-<h1>PANIC</h1>
-<pre style="font-weight: bold;">%s</pre>
-<pre>%s</pre>
-</body>
+	panicHtml = `
+	<html>
+		<head><title>PANIC: %s</title>
+		<style type="text/css">
+		html, body {
+			color: #333333;
+			background-color: #ea5343;
+			margin: 0px;
+		}
+		h1 {
+			color: #d04526;
+			background-color: #ffffff;
+			padding: 20px;
+			border-bottom: 1px dashed #2b3848;
+		}
+		pre {
+			margin: 20px;
+			padding: 20px;
+			border: 2px solid #2b3848;
+			background-color: #ffffff;
+		}
+		</style>
+		</head>
+		<body>
+			<h1>PANIC</h1>
+			<pre style="font-weight: bold;">%s</pre>
+			<pre>%s</pre>
+		</body>
 </html>`
 )
 
@@ -112,33 +110,31 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery() Handler {
-	return func(c Context, log *log.Logger) {
-		defer func() {
-			if err := recover(); err != nil {
-				stack := stack(3)
-				log.Printf("PANIC: %s\n%s", err, stack)
+func Recovery(res http.ResponseWriter) {
+	if err := recover(); err != nil {
+		stack := stack(3)
+		// log.Printf("PANIC: %s\n%s", err, stack)
 
-				// Lookup the current responsewriter
-				val := c.Get(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-				res := val.Interface().(http.ResponseWriter)
+		// Lookup the current responsewriter
+		// val := c.Get(inject.InterfaceOf((*http.ResponseWriter)(nil)))
+		// res := val.Interface().(http.ResponseWriter)
 
-				// respond with panic message while in development mode
-				var body []byte
-				if Env == Dev {
-					res.Header().Set("Content-Type", "text/html")
-					body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
-				} else {
-					body = []byte("500 Internal Server Error")
-				}
+		// respond with panic message while in development mode
+		var body []byte
+		// if Env == Dev {
+		res.Header().Set("Content-Type", "text/html")
+		body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
+		// } else {
+		// body = []byte("500 Internal Server Error")
+		// }
 
-				res.WriteHeader(http.StatusInternalServerError)
-				if nil != body {
-					res.Write(body)
-				}
-			}
-		}()
-
-		c.Next()
+		res.WriteHeader(http.StatusInternalServerError)
+		if nil != body {
+			res.Write(body)
+		}
 	}
+	// }()
+
+	// c.Next()
+	// }
 }
