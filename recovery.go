@@ -3,41 +3,11 @@ package cocktail
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"runtime"
-)
-
-const (
-	panicHtml = `
-	<html>
-		<head><title>PANIC: %s</title>
-		<style type="text/css">
-		html, body {
-			color: #333333;
-			background-color: #ea5343;
-			margin: 0px;
-		}
-		h1 {
-			color: #d04526;
-			background-color: #ffffff;
-			padding: 20px;
-			border-bottom: 1px dashed #2b3848;
-		}
-		pre {
-			margin: 20px;
-			padding: 20px;
-			border: 2px solid #2b3848;
-			background-color: #ffffff;
-		}
-		</style>
-		</head>
-		<body>
-			<h1>PANIC</h1>
-			<pre style="font-weight: bold;">%s</pre>
-			<pre>%s</pre>
-		</body>
-</html>`
+	"strings"
 )
 
 var (
@@ -47,94 +17,84 @@ var (
 	slash     = []byte("/")
 )
 
-// stack returns a nicely formated stack frame, skipping skip frames
-func stack(skip int) []byte {
-	buf := new(bytes.Buffer) // the returned data
-	// As we loop, we open files and read them. These variables record the currently
-	// loaded file.
-	var lines [][]byte
-	var lastFile string
-	for i := skip; ; i++ { // Skip the expected number of frames
-		pc, file, line, ok := runtime.Caller(i)
-		if !ok {
-			break
+/**
+ * Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
+ */
+func Recovery(request *http.Request, response http.ResponseWriter, logger *log.Logger) {
+	if err := recover(); err != nil {
+		log, time := CreateRecoveryLog(request)
+		log.Message = fmt.Sprintf("%s", err)
+		log.Trace = getStack(3)
+
+		fmt.Println(log, time.Unix(), time.UnixNano())
+
+		// Write error to file
+
+		// Return error
+		config := ConfigInstance()
+		httpError := Error500()
+
+		if config.IsDebug {
+			httpError.Detail = log
 		}
-		// Print this much at least.  If we can't find the source, it won't show.
-		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
-		if file != lastFile {
-			data, err := ioutil.ReadFile(file)
-			if err != nil {
-				continue
-			}
-			lines = bytes.Split(data, []byte{'\n'})
-			lastFile = file
-		}
-		fmt.Fprintf(buf, "\t%s: %s\n", function(pc), source(lines, line))
+		WriteError(response, httpError)
 	}
-	return buf.Bytes()
 }
 
-// source returns a space-trimmed slice of the n'th line.
-func source(lines [][]byte, n int) []byte {
-	n-- // in stack trace, lines are 1-indexed but our array is 0-indexed
-	if n < 0 || n >= len(lines) {
-		return dunno
-	}
-	return bytes.TrimSpace(lines[n])
-}
-
-// function returns, if possible, the name of the function containing the PC.
-func function(pc uintptr) []byte {
+/**
+ * Convert function pointer to human readable text.
+ */
+func getFunctionName(pc uintptr) string {
 	fn := runtime.FuncForPC(pc)
+
+	// Condition validation: return don't know if function is not available
 	if fn == nil {
-		return dunno
+		return string(dunno)
 	}
+
+	// Convert function name to byte array for modification
 	name := []byte(fn.Name())
-	// The name includes the path name to the package, which is unnecessary
-	// since the file name is already included.  Plus, it has center dots.
-	// That is, we see
-	//	runtime/debug.*T·ptrmethod
-	// and want
-	//	*T.ptrmethod
-	// Also the package path might contains dot (e.g. code.google.com/...),
-	// so first eliminate the path prefix
+
+	// Eliminate the path prefix
 	if lastslash := bytes.LastIndex(name, slash); lastslash >= 0 {
 		name = name[lastslash+1:]
 	}
+
+	// Eliminate period prefix
 	if period := bytes.Index(name, dot); period >= 0 {
 		name = name[period+1:]
 	}
+
+	// Convert center dot to dot
 	name = bytes.Replace(name, centerDot, dot, -1)
-	return name
+	return string(name)
 }
 
-// Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
-// While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery(res http.ResponseWriter) {
-	if err := recover(); err != nil {
-		stack := stack(3)
-		// log.Printf("PANIC: %s\n%s", err, stack)
+/**
+ * Return a nicely formated stack frame.
+ */
+func getStack(skip int) []string {
+	srcPath := fmt.Sprintf("%s/src", os.Getenv("GOPATH"))
+	traces := make([]string, 5)
 
-		// Lookup the current responsewriter
-		// val := c.Get(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-		// res := val.Interface().(http.ResponseWriter)
-
-		// respond with panic message while in development mode
-		var body []byte
-		// if Env == Dev {
-		res.Header().Set("Content-Type", "text/html")
-		body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
-		// } else {
-		// body = []byte("500 Internal Server Error")
-		// }
-
-		res.WriteHeader(http.StatusInternalServerError)
-		if nil != body {
-			res.Write(body)
+	for i, j := skip, 0; ; i++ {
+		// Condition validation: Stop if there is nothing else
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok || j >= 5 {
+			break
 		}
-	}
-	// }()
 
-	// c.Next()
-	// }
+		// Condition validation: Skip go root
+		if !strings.HasPrefix(file, srcPath) {
+			continue
+		}
+
+		// Trim prefix
+		file = file[len(srcPath):]
+
+		// Print this much at least. If we can't find the source, it won't show.
+		traces[j] = fmt.Sprintf("%s: %s (%d)\n", file, getFunctionName(pc), line)
+		j++
+	}
+	return traces
 }

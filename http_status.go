@@ -3,9 +3,9 @@ package cocktail
 import "net/http"
 
 type HttpStatus struct {
-	Status int    `json:"status"`
-	Title  string `json:"title"`
-	Detail string `json:"detail"`
+	Status int         `json:"status"`
+	Title  string      `json:"title"`
+	Detail interface{} `json:"detail"`
 }
 
 // MARK: Struct's constructors

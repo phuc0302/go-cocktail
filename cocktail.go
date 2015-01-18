@@ -62,7 +62,7 @@ func (c *Cocktail) Run() {
 // MARK: http.Handler's members
 func (c *Cocktail) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	request.Method = strings.ToUpper(request.Method)
-	defer Recovery(response)
+	defer Recovery(request, response, c.Logger)
 
 	if len(c.Static) > 0 && strings.HasPrefix(request.URL.Path, c.Static) {
 		c.serveStatic(request, response)

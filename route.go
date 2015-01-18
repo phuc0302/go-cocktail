@@ -18,7 +18,7 @@ type Route struct {
 }
 
 // MARK: Struct's constructors
-func DefaultRoute(pattern string) IRoute {
+func CreateRoute(pattern string) IRoute {
 	regex := regexp.MustCompile(`:[^/#?()\.\\]+`)
 
 	// Convert param to regular expression
@@ -27,7 +27,7 @@ func DefaultRoute(pattern string) IRoute {
 	})
 	regexPattern += "/?"
 
-	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]IHandler, 4)}
+	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]IHandler, len(HTTP_METHODS))}
 	return &route
 }
 

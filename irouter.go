@@ -14,6 +14,8 @@ type IRouter interface {
 	Patch(urlPath string, handler IHandler)  // Update
 	Delete(urlPath string, handler IHandler) // Delete
 
+	Put(urlPath string, handler IHandler) // Replace
+
 	// Handle is the entry point for routing. This is used as a martini.Handler
 	HandleRequest(request *http.Request, response http.ResponseWriter)
 }

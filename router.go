@@ -27,16 +27,20 @@ func (r *Router) Group(urlGroup string, function func(router IRouter)) {
 }
 
 func (r *Router) Get(urlPath string, handler IHandler) {
-	r.addRoute("Get", urlPath, handler)
+	r.addRoute(GET, urlPath, handler)
 }
 func (r *Router) Post(urlPath string, handler IHandler) {
-	r.addRoute("Post", urlPath, handler)
+	r.addRoute(POST, urlPath, handler)
 }
 func (r *Router) Patch(urlPath string, handler IHandler) {
-	r.addRoute("Patch", urlPath, handler)
+	r.addRoute(PATCH, urlPath, handler)
 }
 func (r *Router) Delete(urlPath string, handler IHandler) {
-	r.addRoute("Delete", urlPath, handler)
+	r.addRoute(DELETE, urlPath, handler)
+}
+
+func (r *Router) Put(urlPath string, handler IHandler) {
+	r.addRoute(PUT, urlPath, handler)
 }
 
 func (r *Router) HandleRequest(request *http.Request, response http.ResponseWriter) {
@@ -92,7 +96,7 @@ func (r *Router) addRoute(method string, pattern string, handler IHandler) {
 	}
 
 	// Create new route
-	newRoute := DefaultRoute(pattern)
+	newRoute := CreateRoute(pattern)
 	newRoute.AddHandler(method, handler)
 	r.logger.Printf("%-6s -> %s\n", strings.ToUpper(method), newRoute.Pattern())
 
