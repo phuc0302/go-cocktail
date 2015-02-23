@@ -22,11 +22,10 @@ var (
  */
 func Recovery(request *http.Request, response http.ResponseWriter, logger *log.Logger) {
 	if err := recover(); err != nil {
-		log, time := CreateRecoveryLog(request)
+		// log, time := CreateRecoveryLog(request)
+		log, _ := CreateRecoveryLog(request)
 		log.Message = fmt.Sprintf("%s", err)
 		log.Trace = getStack(3)
-
-		fmt.Println(log, time.Unix(), time.UnixNano())
 
 		// Write error to file
 
@@ -34,7 +33,7 @@ func Recovery(request *http.Request, response http.ResponseWriter, logger *log.L
 		config := ConfigInstance()
 		httpError := Error500()
 
-		if config.IsDebug {
+		if !config.IsRelease {
 			httpError.Detail = log
 		}
 		WriteError(response, httpError)
@@ -93,7 +92,7 @@ func getStack(skip int) []string {
 		file = file[len(srcPath):]
 
 		// Print this much at least. If we can't find the source, it won't show.
-		traces[j] = fmt.Sprintf("%s: %s (%d)\n", file, getFunctionName(pc), line)
+		traces[j] = fmt.Sprintf("%s: %s (%d)", file, getFunctionName(pc), line)
 		j++
 	}
 	return traces

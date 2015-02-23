@@ -3,11 +3,13 @@ package cocktail
 import "mime/multipart"
 
 // Constants
-const DELETE = "DELETE"
-const GET = "GET"
-const PATCH = "PATCH"
-const POST = "POST"
-const PUT = "PUT"
+const (
+	DELETE = "DELETE"
+	GET    = "GET"
+	PATCH  = "PATCH"
+	POST   = "POST"
+	PUT    = "PUT"
+)
 
 // Valid Http methods
 var HTTP_METHODS = [...]string{GET, POST, PATCH, DELETE, PUT}

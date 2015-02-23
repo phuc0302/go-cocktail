@@ -7,6 +7,18 @@ import (
 	"os"
 )
 
+func CreateDir(path string, perm os.FileMode) {
+	os.MkdirAll(path, perm)
+}
+
+/**
+ * Check if file exist at path or not.
+ */
+func DirExist(dirPath string) bool {
+	fileInfo, err := os.Stat(dirPath)
+	return fileInfo.IsDir() && err == nil
+}
+
 /**
  * Extract input form.
  */
