@@ -16,9 +16,9 @@ type RequestLog struct {
 }
 
 type RecoveryLog struct {
+	Request RequestLog `json:"request"`
 	Date    string     `json:"date"`
 	Message string     `json:"message"`
-	Request RequestLog `json:"request"`
 	Trace   []string   `json:"trace"`
 }
 

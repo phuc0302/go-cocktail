@@ -2,143 +2,143 @@ package cocktail
 
 import "net/http"
 
-type HttpStatus struct {
+type Status struct {
 	Status int         `json:"status"`
 	Title  string      `json:"title"`
 	Detail interface{} `json:"detail"`
 }
 
 // MARK: Struct's constructors
-func Status200() *HttpStatus {
+func OK() *Status {
 	return genericError(http.StatusOK)
 }
-func Status201() *HttpStatus {
+func Created() *Status {
 	return genericError(http.StatusCreated)
 }
 
-func Error400() *HttpStatus {
+func BadRequest() *Status {
 	return genericError(http.StatusBadRequest)
 }
-func Error401() *HttpStatus {
+func Unauthorized() *Status {
 	return genericError(http.StatusUnauthorized)
 }
-func Error402() *HttpStatus {
+func PaymentRequired() *Status {
 	return genericError(http.StatusPaymentRequired)
 }
-func Error403() *HttpStatus {
+func Forbidden() *Status {
 	return genericError(http.StatusForbidden)
 }
-func Error404() *HttpStatus {
+func NotFound() *Status {
 	return genericError(http.StatusNotFound)
 }
-func Error405() *HttpStatus {
+func MethodNotAllowed() *Status {
 	return genericError(http.StatusMethodNotAllowed)
 }
-func Error406() *HttpStatus {
+func NotAcceptable() *Status {
 	return genericError(http.StatusNotAcceptable)
 }
-func Error407() *HttpStatus {
+func ProxyAuthRequired() *Status {
 	return genericError(http.StatusProxyAuthRequired)
 }
-func Error408() *HttpStatus {
+func RequestTimeout() *Status {
 	return genericError(http.StatusRequestTimeout)
 }
-func Error409() *HttpStatus {
+func Conflict() *Status {
 	return genericError(http.StatusConflict)
 }
-func Error410() *HttpStatus {
+func Gone() *Status {
 	return genericError(http.StatusGone)
 }
-func Error411() *HttpStatus {
+func LengthRequired() *Status {
 	return genericError(http.StatusLengthRequired)
 }
-func Error412() *HttpStatus {
+func PreconditionFailed() *Status {
 	return genericError(http.StatusPreconditionFailed)
 }
-func Error413() *HttpStatus {
+func RequestEntityTooLarge() *Status {
 	return genericError(http.StatusRequestEntityTooLarge)
 }
-func Error414() *HttpStatus {
+func RequestURITooLong() *Status {
 	return genericError(http.StatusRequestURITooLong)
 }
-func Error415() *HttpStatus {
+func UnsupportedMediaType() *Status {
 	return genericError(http.StatusUnsupportedMediaType)
 }
-func Error416() *HttpStatus {
+func RequestedRangeNotSatisfiable() *Status {
 	return genericError(http.StatusRequestedRangeNotSatisfiable)
 }
-func Error417() *HttpStatus {
+func ExpectationFailed() *Status {
 	return genericError(http.StatusExpectationFailed)
 }
-func Error418() *HttpStatus {
+func Teapot() *Status {
 	return genericError(http.StatusTeapot)
 }
-func Error422() *HttpStatus {
+func UnprocessableEntity() *Status {
 	return specificError(422, "Unprocessable Entity")
 }
-func Error423() *HttpStatus {
+func Locked() *Status {
 	return specificError(423, "Locked")
 }
-func Error424() *HttpStatus {
+func FailedDependency() *Status {
 	return specificError(424, "Failed Dependency")
 }
-func Error425() *HttpStatus {
+func UnorderedCollection() *Status {
 	return specificError(425, "Unordered Collection")
 }
-func Error426() *HttpStatus {
+func UpgradeRequired() *Status {
 	return specificError(426, "Upgrade Required")
 }
-func Error428() *HttpStatus {
+func PreconditionRequired() *Status {
 	return specificError(428, "Precondition Required")
 }
-func Error429() *HttpStatus {
+func TooManyRequests() *Status {
 	return specificError(429, "Too Many Requests")
 }
-func Error431() *HttpStatus {
+func RequestHeaderFieldsTooLarge() *Status {
 	return specificError(431, "Request Header Fields Too Large")
 }
 
-func Error500() *HttpStatus {
+func InternalServerError() *Status {
 	return genericError(http.StatusInternalServerError)
 }
-func Error501() *HttpStatus {
+func NotImplemented() *Status {
 	return genericError(http.StatusNotImplemented)
 }
-func Error502() *HttpStatus {
+func BadGateway() *Status {
 	return genericError(http.StatusBadGateway)
 }
-func Error503() *HttpStatus {
+func ServiceUnavailable() *Status {
 	return genericError(http.StatusServiceUnavailable)
 }
-func Error504() *HttpStatus {
+func GatewayTimeout() *Status {
 	return genericError(http.StatusGatewayTimeout)
 }
-func Error505() *HttpStatus {
+func HTTPVersionNotSupported() *Status {
 	return genericError(http.StatusHTTPVersionNotSupported)
 }
-func Error506() *HttpStatus {
+func VariantAlsoNegotiates() *Status {
 	return specificError(506, "Variant Also Negotiates")
 }
-func Error507() *HttpStatus {
+func InsufficientStorage() *Status {
 	return specificError(507, "Insufficient Storage")
 }
-func Error508() *HttpStatus {
+func LoopDetected() *Status {
 	return specificError(508, "Loop Detected")
 }
-func Error511() *HttpStatus {
+func NetworkAuthenticationRequired() *Status {
 	return specificError(511, "Network Authentication Required")
 }
 
 // MARK: Struct's private constructors
-func genericError(statusCode int) *HttpStatus {
-	return &HttpStatus{
+func genericError(statusCode int) *Status {
+	return &Status{
 		Status: statusCode,
 		Title:  http.StatusText(statusCode),
 		Detail: http.StatusText(statusCode),
 	}
 }
-func specificError(statusCode int, title string) *HttpStatus {
-	return &HttpStatus{
+func specificError(statusCode int, title string) *Status {
+	return &Status{
 		Status: statusCode,
 		Title:  title,
 		Detail: title,

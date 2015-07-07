@@ -30,12 +30,7 @@ func Recovery(request *http.Request, response http.ResponseWriter, logger *log.L
 		// Write error to file
 
 		// Return error
-		config := ConfigInstance()
-		httpError := Error500()
-
-		if !config.IsRelease {
-			httpError.Detail = log
-		}
+		httpError := InternalServerError()
 		WriteError(response, httpError)
 	}
 }

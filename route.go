@@ -14,11 +14,11 @@ type Route struct {
 	pattern string
 	regex   *regexp.Regexp
 
-	handlers map[string]IHandler
+	handlers map[string]HandlerFunc
 }
 
 // MARK: Struct's constructors
-func CreateRoute(pattern string) IRoute {
+func createRoute(pattern string) *Route {
 	regex := regexp.MustCompile(`:[^/#?()\.\\]+`)
 
 	// Convert param to regular expression
@@ -27,7 +27,7 @@ func CreateRoute(pattern string) IRoute {
 	})
 	regexPattern += "/?"
 
-	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]IHandler, len(HTTP_METHODS))}
+	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]HandlerFunc, len(HTTP_METHODS))}
 	return &route
 }
 
@@ -36,7 +36,7 @@ func (r *Route) Pattern() string {
 	return r.pattern
 }
 
-func (r *Route) AddHandler(method string, handler IHandler) {
+func (r *Route) AddHandler(method string, handler HandlerFunc) {
 	if reflect.TypeOf(handler).Kind() != reflect.Func {
 		panic("Request handler must be a function type.")
 	}

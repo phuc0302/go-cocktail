@@ -6,16 +6,22 @@ import "mime/multipart"
 const (
 	DELETE = "DELETE"
 	GET    = "GET"
+	HEAD   = "HEAD"
 	PATCH  = "PATCH"
 	POST   = "POST"
 	PUT    = "PUT"
 )
 
 // Valid Http methods
-var HTTP_METHODS = [...]string{GET, POST, PATCH, DELETE, PUT}
+var HTTP_METHODS = [...]string{DELETE, GET, HEAD, PATCH, POST, PUT}
 
-// Path params from url pattern
-type PathParams map[string]string
+type (
+	HandlerFunc func(*Context)
+	GroupFunc   func(*Cocktail)
 
-// Multipart files from multipart form
-type FileParams map[string][]*multipart.FileHeader
+	// Path params from url pattern
+	PathParams map[string]string
+
+	// Multipart files from multipart form
+	FileParams map[string][]*multipart.FileHeader
+)

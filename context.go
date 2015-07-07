@@ -1,5 +1,11 @@
 package cocktail
 
+import (
+	"mime/multipart"
+	"net/http"
+	"net/url"
+)
+
 /**
  * IHandler represent a routing handler function.
  *
@@ -18,4 +24,16 @@ package cocktail
  *    + struct or string      (Optional)
  *    + template              (Optional)  (html/template)
  */
-type IHandler interface{}
+type Context struct {
+	Queries    url.Values
+	PathParams map[string]string
+	FileParams map[string][]*multipart.FileHeader
+
+	request  *http.Request
+	response http.ResponseWriter
+}
+
+func (c *Context) renderJson() {
+}
+func (c *Context) renderHtml() {
+}

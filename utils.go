@@ -58,7 +58,7 @@ func FileExist(filePath string) bool {
 /**
  * Return error to client as json form.
  */
-func WriteError(response http.ResponseWriter, httpStatus *HttpStatus) {
+func WriteError(response http.ResponseWriter, httpStatus *Status) {
 	response.Header().Set("Content-Type", "application/problem+json")
 	response.WriteHeader(httpStatus.Status)
 
