@@ -1,13 +1,10 @@
 package cocktail
 
 import (
-	"bytes"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"runtime"
-	"strings"
+	"time"
 )
 
 var (
@@ -18,12 +15,13 @@ var (
 )
 
 /**
- * Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
+ * Recovery returns a middleware that recovers from any panics and writes a 500
+ * if there was one.
  */
 func Recovery(request *http.Request, response http.ResponseWriter, logger *log.Logger) {
 	if err := recover(); err != nil {
 		// log, time := CreateRecoveryLog(request)
-		log, _ := CreateRecoveryLog(request)
+		log, _ := createLog(request)
 		log.Message = fmt.Sprintf("%s", err)
 		log.Trace = getStack(3)
 
@@ -35,60 +33,40 @@ func Recovery(request *http.Request, response http.ResponseWriter, logger *log.L
 	}
 }
 
-/**
- * Convert function pointer to human readable text.
- */
-func getFunctionName(pc uintptr) string {
-	fn := runtime.FuncForPC(pc)
-
-	// Condition validation: return don't know if function is not available
-	if fn == nil {
-		return string(dunno)
-	}
-
-	// Convert function name to byte array for modification
-	name := []byte(fn.Name())
-
-	// Eliminate the path prefix
-	if lastslash := bytes.LastIndex(name, slash); lastslash >= 0 {
-		name = name[lastslash+1:]
-	}
-
-	// Eliminate period prefix
-	if period := bytes.Index(name, dot); period >= 0 {
-		name = name[period+1:]
-	}
-
-	// Convert center dot to dot
-	name = bytes.Replace(name, centerDot, dot, -1)
-	return string(name)
+type requestLog struct {
+	Uri           string `json:"uri"`
+	UserAgent     string `json:"user_agent"`
+	HttpReferer   string `json:"http_referer"`
+	RemoteAddress string `json:"remote_address"`
+	ContentType   string `json:"content_type"`
+	RequestBody   string `json:"request_body"`
 }
 
-/**
- * Return a nicely formated stack frame.
- */
-func getStack(skip int) []string {
-	srcPath := fmt.Sprintf("%s/src", os.Getenv("GOPATH"))
-	traces := make([]string, 5)
+type recoveryLog struct {
+	Request requestLog `json:"request"`
+	Date    string     `json:"date"`
+	Message string     `json:"message"`
+	Trace   []string   `json:"trace"`
+}
 
-	for i, j := skip, 0; ; i++ {
-		// Condition validation: Stop if there is nothing else
-		pc, file, line, ok := runtime.Caller(i)
-		if !ok || j >= 5 {
-			break
-		}
+/** Create default recovery log with time stamp. */
+func createLog(request *http.Request) (*recoveryLog, time.Time) {
+	end := time.Now().UTC()
+	log := recoveryLog{}
 
-		// Condition validation: Skip go root
-		if !strings.HasPrefix(file, srcPath) {
-			continue
-		}
+	log.Date = end.Format(time.RFC822)
+	log.Request.Uri = request.RequestURI
+	log.Request.UserAgent = request.UserAgent()
+	log.Request.HttpReferer = request.Referer()
+	log.Request.RemoteAddress = request.RemoteAddr
+	log.Request.ContentType = request.Header.Get("Content-Type")
 
-		// Trim prefix
-		file = file[len(srcPath):]
+	// // Read request body
+	// bytes := make([]byte, request.ContentLength)
+	// _, err := request.Body.Read(bytes)
 
-		// Print this much at least. If we can't find the source, it won't show.
-		traces[j] = fmt.Sprintf("%s: %s (%d)", file, getFunctionName(pc), line)
-		j++
-	}
-	return traces
+	// if err == nil {
+	// 	log.Request.RequestBody = base64.StdEncoding.EncodeToString(bytes)
+	// }
+	return &log, end
 }

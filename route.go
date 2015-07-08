@@ -11,7 +11,7 @@ import (
 )
 
 type Route struct {
-	pattern string
+	Pattern string
 	regex   *regexp.Regexp
 
 	handlers map[string]HandlerFunc
@@ -31,11 +31,7 @@ func createRoute(pattern string) *Route {
 	return &route
 }
 
-// MARK: IRoute interface's members
-func (r *Route) Pattern() string {
-	return r.pattern
-}
-
+// MARK: Struct's public functions
 func (r *Route) AddHandler(method string, handler HandlerFunc) {
 	if reflect.TypeOf(handler).Kind() != reflect.Func {
 		panic("Request handler must be a function type.")

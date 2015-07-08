@@ -9,9 +9,7 @@ import (
 	"time"
 )
 
-/**
- * Cocktail represents the top level web application.
- */
+/** Cocktail represents the top level web application. */
 type Cocktail struct {
 	Logger *log.Logger
 	Host   string
@@ -104,9 +102,9 @@ func (c *Cocktail) addRoute(method string, pattern string, handler HandlerFunc) 
 
 	// Look for existing one before create new
 	for _, route := range c.routes {
-		if route.Pattern() == pattern {
+		if route.Pattern == pattern {
 			route.AddHandler(method, handler)
-			c.Logger.Printf("%-6s -> %s\n", strings.ToUpper(method), route.Pattern())
+			c.Logger.Printf("%-6s -> %s\n", strings.ToUpper(method), route.Pattern)
 			return
 		}
 	}
@@ -114,7 +112,7 @@ func (c *Cocktail) addRoute(method string, pattern string, handler HandlerFunc) 
 	// Create new route
 	newRoute := createRoute(pattern)
 	newRoute.AddHandler(method, handler)
-	c.Logger.Printf("%-6s -> %s\n", strings.ToUpper(method), newRoute.Pattern())
+	c.Logger.Printf("%-6s -> %s\n", strings.ToUpper(method), newRoute.Pattern)
 
 	// Add to collection
 	c.routes = append(c.routes, *newRoute)
