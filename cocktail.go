@@ -16,8 +16,9 @@ type Cocktail struct {
 	Port   string
 	Static string
 
-	groups []string
-	routes []Route
+	routes  []Route
+	groups  []string
+	methods []string
 }
 
 // MARK: Struct's constructors
@@ -41,10 +42,11 @@ func Default() *Cocktail {
 	groups := make([]string, 0)
 
 	return &Cocktail{
-		Host:   host,
-		Port:   port,
-		Logger: logger,
-		groups: groups,
+		Host:    host,
+		Port:    port,
+		Logger:  logger,
+		groups:  groups,
+		methods: []string{DELETE, GET, HEAD, PATCH, POST, PUT},
 	}
 }
 
@@ -62,34 +64,34 @@ func (c *Cocktail) Run() {
 	c.Logger.Fatalln(server.ListenAndServe())
 }
 
-func (c *Cocktail) Group(urlGroup string, function GroupFunc) {
+func (c *Cocktail) Group(urlGroup string, function func(c *Cocktail)) {
 	c.groups = append(c.groups, urlGroup)
 	function(c)
 
 	c.groups = c.groups[:len(c.groups)-1]
 }
 
-func (c *Cocktail) Delete(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Delete(urlPath string, handler interface{}) {
 	c.addRoute(DELETE, urlPath, handler)
 }
-func (c *Cocktail) Get(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Get(urlPath string, handler interface{}) {
 	c.addRoute(GET, urlPath, handler)
 }
-func (c *Cocktail) Head(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Head(urlPath string, handler interface{}) {
 	c.addRoute(HEAD, urlPath, handler)
 }
-func (c *Cocktail) Patch(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Patch(urlPath string, handler interface{}) {
 	c.addRoute(PATCH, urlPath, handler)
 }
-func (c *Cocktail) Post(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Post(urlPath string, handler interface{}) {
 	c.addRoute(POST, urlPath, handler)
 }
-func (c *Cocktail) Put(urlPath string, handler HandlerFunc) {
+func (c *Cocktail) Put(urlPath string, handler interface{}) {
 	c.addRoute(PUT, urlPath, handler)
 }
 
 // MARK: Struct's private functions
-func (c *Cocktail) addRoute(method string, pattern string, handler HandlerFunc) {
+func (c *Cocktail) addRoute(method string, pattern string, handler interface{}) {
 	// Condition validation: If pattern belong to group or not
 	if len(c.groups) > 0 {
 		groupPattern := ""
@@ -118,47 +120,48 @@ func (c *Cocktail) addRoute(method string, pattern string, handler HandlerFunc) 
 	c.routes = append(c.routes, *newRoute)
 }
 
-func (c *Cocktail) serveRequest(request *http.Request, response http.ResponseWriter) {
+func (c *Cocktail) serveRequest(context *Context) {
 	// Condition validation: Validate request method
 	isAllowed := false
-	for _, allowedMethod := range HTTP_METHODS {
-		if request.Method == allowedMethod {
+	for _, allowedMethod := range c.methods {
+		if context.request.Method == allowedMethod {
 			isAllowed = true
 			break
 		}
 	}
 
 	if !isAllowed {
-		WriteError(response, MethodNotAllowed())
+		context.RenderError(MethodNotAllowed())
 		return
 	}
 
 	// Condition validation: Find matched route
 	for _, route := range c.routes {
 		// Match url & extract path params
-		ok, pathParams := route.Match(request.Method, request.URL.Path)
+		ok, pathParams := route.Match(context.request.Method, context.request.URL.Path)
 		if !ok {
 			continue
 		}
 
-		route.InvokeHandler(request, response, pathParams)
+		context.PathParams = pathParams
+		route.InvokeHandler(context)
 		return
 	}
 
 	// Not Found
-	WriteError(response, NotFound())
+	context.RenderError(NotFound())
 }
-func (c *Cocktail) serveResource(request *http.Request, response http.ResponseWriter) {
+func (c *Cocktail) serveResource(context *Context) {
 	// Condition validation: Only GET is accepted when request a static resources
-	if request.Method != GET {
-		WriteError(response, Forbidden())
+	if context.request.Method != GET {
+		context.RenderError(Forbidden())
 		return
 	}
-	resourcePath := request.URL.Path[1:]
+	resourcePath := context.request.URL.Path[1:]
 
 	// Condition validation: Check if file exist or not
 	if !FileExist(resourcePath) {
-		WriteError(response, NotFound())
+		context.RenderError(NotFound())
 		return
 	}
 
@@ -167,29 +170,32 @@ func (c *Cocktail) serveResource(request *http.Request, response http.ResponseWr
 	defer f.Close()
 
 	if err != nil {
-		WriteError(response, NotFound())
+		context.RenderError(NotFound())
 		return
 	}
 
 	// Condition validation: Only serve file, not directory
 	fi, _ := f.Stat()
 	if fi.IsDir() {
-		WriteError(response, Forbidden())
+		context.RenderError(Forbidden())
 		return
 	}
 
 	c.Logger.Printf("serve static: %s", resourcePath)
-	http.ServeContent(response, request, resourcePath, fi.ModTime(), f)
+	http.ServeContent(context.response, context.request, resourcePath, fi.ModTime(), f)
 }
 
 // MARK: http.Handler's members
 func (c *Cocktail) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	request.Method = strings.ToUpper(request.Method)
-	defer Recovery(request, response, c.Logger)
+
+	// Create context
+	context := Context{request: request, response: response}
+	defer context.Recovery(c.Logger)
 
 	if len(c.Static) > 0 && strings.HasPrefix(request.URL.Path, c.Static) {
-		c.serveResource(request, response)
+		c.serveResource(&context)
 	} else {
-		c.serveRequest(request, response)
+		c.serveRequest(&context)
 	}
 }

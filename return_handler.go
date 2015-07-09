@@ -1,7 +1,5 @@
 package cocktail
 
-import "reflect"
-
 // import (
 // 	"net/http"
 // 	"phuc/cocktail-di"
@@ -36,10 +34,10 @@ import "reflect"
 // 	}
 // }
 
-func isByteSlice(val reflect.Value) bool {
-	return val.Kind() == reflect.Slice && val.Type().Elem().Kind() == reflect.Uint8
-}
+//func isByteSlice(val reflect.Value) bool {
+//	return val.Kind() == reflect.Slice && val.Type().Elem().Kind() == reflect.Uint8
+//}
 
-func canDeref(val reflect.Value) bool {
-	return val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr
-}
+//func canDeref(val reflect.Value) bool {
+//	return val.Kind() == reflect.Interface || val.Kind() == reflect.Ptr
+//}

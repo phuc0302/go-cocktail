@@ -14,7 +14,7 @@ type Route struct {
 	Pattern string
 	regex   *regexp.Regexp
 
-	handlers map[string]HandlerFunc
+	handlers map[string]interface{}
 }
 
 // MARK: Struct's constructors
@@ -27,12 +27,12 @@ func createRoute(pattern string) *Route {
 	})
 	regexPattern += "/?"
 
-	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]HandlerFunc, len(HTTP_METHODS))}
+	route := Route{pattern, regexp.MustCompile(regexPattern), make(map[string]interface{}, 7)}
 	return &route
 }
 
 // MARK: Struct's public functions
-func (r *Route) AddHandler(method string, handler HandlerFunc) {
+func (r *Route) AddHandler(method string, handler interface{}) {
 	if reflect.TypeOf(handler).Kind() != reflect.Func {
 		panic("Request handler must be a function type.")
 	}
@@ -64,15 +64,15 @@ func (r *Route) Match(method string, urlPath string) (bool, PathParams) {
 	return true, params
 }
 
-func (r *Route) InvokeHandler(request *http.Request, response http.ResponseWriter, pathParams PathParams) {
-	injector := r.prepareInjector(request, pathParams)
-	handler := r.handlers[request.Method]
+func (r *Route) InvokeHandler(c *Context) {
+	injector := r.prepareInjector(c.request, c.PathParams)
+	handler := r.handlers[c.request.Method]
 
 	// Call handler
-	injector.Map(request)
-	injector.Map(response)
-	injector.Map(request.Header)
-	values, err := injector.Invoke(handler)
+	injector.Map(c.request)
+	injector.Map(c.response)
+	injector.Map(c.request.Header)
+	_, err := injector.Invoke(handler)
 
 	// Condition validation: Validate error
 	if err != nil {
@@ -80,26 +80,27 @@ func (r *Route) InvokeHandler(request *http.Request, response http.ResponseWrite
 	}
 
 	// if the handler returned something, write it to the http response
-	if len(values) == 1 {
-		var responseVal reflect.Value
+	// if len(values) == 1 {
+	// 	var responseVal reflect.Value
 
-		if len(values) > 1 && values[0].Kind() == reflect.Int {
-			response.WriteHeader(int(values[0].Int()))
-			responseVal = values[1]
-		} else if len(values) > 0 {
-			responseVal = values[0]
-		}
+	// 	if len(values) > 1 && values[0].Kind() == reflect.Int {
+	// 		response.WriteHeader(int(values[0].Int()))
+	// 		responseVal = values[1]
+	// 	} else if len(values) > 0 {
+	// 		responseVal = values[0]
+	// 	}
 
-		if canDeref(responseVal) {
-			responseVal = responseVal.Elem()
-		}
+	// 	if canDeref(responseVal) {
+	// 		responseVal = responseVal.Elem()
+	// 	}
 
-		if isByteSlice(responseVal) {
-			response.Write(responseVal.Bytes())
-		} else {
-			response.Write([]byte(responseVal.String()))
-		}
-	}
+	// 	if isByteSlice(responseVal) {
+	// 		response.Write(responseVal.Bytes())
+	// 	} else {
+	// 		response.Write([]byte(responseVal.String()))
+	// 	}
+	// }
+
 	// else {
 	// 	panic("Invalid return value, should be interface.")
 	// }

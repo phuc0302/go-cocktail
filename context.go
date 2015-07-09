@@ -1,6 +1,9 @@
 package cocktail
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -33,7 +36,30 @@ type Context struct {
 	response http.ResponseWriter
 }
 
-func (c *Context) renderJson() {
+// MARK: Struct's public functions
+func (c *Context) RenderError(status *Status) {
+	c.response.Header().Set("Content-Type", "application/problem+json")
+	c.response.WriteHeader(status.Status)
+
+	cause, _ := json.Marshal(status)
+	c.response.Write(cause)
 }
-func (c *Context) renderHtml() {
+func (c *Context) RenderJson() {
+}
+func (c *Context) RenderHtml() {
+}
+
+func (c *Context) Recovery(logger *log.Logger) {
+	if err := recover(); err != nil {
+		// log, time := CreateRecoveryLog(request)
+		log, _ := createLog(c.request)
+		log.Message = fmt.Sprintf("%s", err)
+		log.Trace = getStack(3)
+
+		// Write error to file
+
+		// Return error
+		httpError := InternalServerError()
+		c.RenderError(httpError)
+	}
 }

@@ -19,13 +19,7 @@ const (
 	PUT    = "PUT"
 )
 
-// Valid Http methods
-var HTTP_METHODS = [...]string{DELETE, GET, HEAD, PATCH, POST, PUT}
-
 type (
-	GroupFunc   func(*Cocktail)
-	HandlerFunc func(*Context)
-
 	// Path params from url pattern
 	PathParams map[string]string
 

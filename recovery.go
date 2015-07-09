@@ -1,8 +1,6 @@
 package cocktail
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
@@ -13,25 +11,6 @@ var (
 	dot       = []byte(".")
 	slash     = []byte("/")
 )
-
-/**
- * Recovery returns a middleware that recovers from any panics and writes a 500
- * if there was one.
- */
-func Recovery(request *http.Request, response http.ResponseWriter, logger *log.Logger) {
-	if err := recover(); err != nil {
-		// log, time := CreateRecoveryLog(request)
-		log, _ := createLog(request)
-		log.Message = fmt.Sprintf("%s", err)
-		log.Trace = getStack(3)
-
-		// Write error to file
-
-		// Return error
-		httpError := InternalServerError()
-		WriteError(response, httpError)
-	}
-}
 
 type requestLog struct {
 	Uri           string `json:"uri"`

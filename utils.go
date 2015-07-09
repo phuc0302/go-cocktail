@@ -1,7 +1,6 @@
 package cocktail
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"os"
@@ -53,15 +52,4 @@ func ExtractMultipartForm(request *http.Request) (url.Values, FileParams) {
 func FileExist(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return err == nil
-}
-
-/**
- * Return error to client as json form.
- */
-func WriteError(response http.ResponseWriter, httpStatus *Status) {
-	response.Header().Set("Content-Type", "application/problem+json")
-	response.WriteHeader(httpStatus.Status)
-
-	cause, _ := json.Marshal(httpStatus)
-	response.Write(cause)
 }
