@@ -1,15 +1,8 @@
-package cocktail
+package common
 
 import (
 	"net/http"
 	"time"
-)
-
-var (
-	dunno     = []byte("???")
-	centerDot = []byte("·")
-	dot       = []byte(".")
-	slash     = []byte("/")
 )
 
 type requestLog struct {
@@ -29,7 +22,7 @@ type recoveryLog struct {
 }
 
 /** Create default recovery log with time stamp. */
-func createLog(request *http.Request) (*recoveryLog, time.Time) {
+func CreateLog(request *http.Request) (*recoveryLog, time.Time) {
 	end := time.Now().UTC()
 	log := recoveryLog{}
 

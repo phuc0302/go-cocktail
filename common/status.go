@@ -1,4 +1,4 @@
-package cocktail
+package common
 
 import "net/http"
 
@@ -9,123 +9,120 @@ type Status struct {
 }
 
 // MARK: Struct's constructors
-func OK() *Status {
+func Status200() *Status {
 	return genericError(http.StatusOK)
 }
-func Created() *Status {
+func Status201() *Status {
 	return genericError(http.StatusCreated)
 }
 
-func BadRequest() *Status {
+func Status400() *Status {
 	return genericError(http.StatusBadRequest)
 }
-func Unauthorized() *Status {
+func Status401() *Status {
 	return genericError(http.StatusUnauthorized)
 }
-func PaymentRequired() *Status {
+func Status402() *Status {
 	return genericError(http.StatusPaymentRequired)
 }
-func Forbidden() *Status {
+func Status403() *Status {
 	return genericError(http.StatusForbidden)
 }
-func NotFound() *Status {
+func Status404() *Status {
 	return genericError(http.StatusNotFound)
 }
-func MethodNotAllowed() *Status {
+func Status405() *Status {
 	return genericError(http.StatusMethodNotAllowed)
 }
-func NotAcceptable() *Status {
+func Status406() *Status {
 	return genericError(http.StatusNotAcceptable)
 }
-func ProxyAuthRequired() *Status {
+func Status407() *Status {
 	return genericError(http.StatusProxyAuthRequired)
 }
-func RequestTimeout() *Status {
+func Status408() *Status {
 	return genericError(http.StatusRequestTimeout)
 }
-func Conflict() *Status {
+func Status409() *Status {
 	return genericError(http.StatusConflict)
 }
-func Gone() *Status {
+func Status410() *Status {
 	return genericError(http.StatusGone)
 }
-func LengthRequired() *Status {
+func Status411() *Status {
 	return genericError(http.StatusLengthRequired)
 }
-func PreconditionFailed() *Status {
+func Status412() *Status {
 	return genericError(http.StatusPreconditionFailed)
 }
-func RequestEntityTooLarge() *Status {
+func Status413() *Status {
 	return genericError(http.StatusRequestEntityTooLarge)
 }
-func RequestURITooLong() *Status {
+func Status414() *Status {
 	return genericError(http.StatusRequestURITooLong)
 }
-func UnsupportedMediaType() *Status {
+func Status415() *Status {
 	return genericError(http.StatusUnsupportedMediaType)
 }
-func RequestedRangeNotSatisfiable() *Status {
+func Status416() *Status {
 	return genericError(http.StatusRequestedRangeNotSatisfiable)
 }
-func ExpectationFailed() *Status {
+func Status417() *Status {
 	return genericError(http.StatusExpectationFailed)
 }
-func Teapot() *Status {
-	return genericError(http.StatusTeapot)
-}
-func UnprocessableEntity() *Status {
+func Status422() *Status {
 	return specificError(422, "Unprocessable Entity")
 }
-func Locked() *Status {
+func Status423() *Status {
 	return specificError(423, "Locked")
 }
-func FailedDependency() *Status {
+func Status424() *Status {
 	return specificError(424, "Failed Dependency")
 }
-func UnorderedCollection() *Status {
+func Status425() *Status {
 	return specificError(425, "Unordered Collection")
 }
 func UpgradeRequired() *Status {
 	return specificError(426, "Upgrade Required")
 }
-func PreconditionRequired() *Status {
+func Status428() *Status {
 	return specificError(428, "Precondition Required")
 }
-func TooManyRequests() *Status {
+func Status429() *Status {
 	return specificError(429, "Too Many Requests")
 }
-func RequestHeaderFieldsTooLarge() *Status {
+func Status431() *Status {
 	return specificError(431, "Request Header Fields Too Large")
 }
 
-func InternalServerError() *Status {
+func Status500() *Status {
 	return genericError(http.StatusInternalServerError)
 }
-func NotImplemented() *Status {
+func Status501() *Status {
 	return genericError(http.StatusNotImplemented)
 }
-func BadGateway() *Status {
+func Status502() *Status {
 	return genericError(http.StatusBadGateway)
 }
-func ServiceUnavailable() *Status {
+func Status503() *Status {
 	return genericError(http.StatusServiceUnavailable)
 }
-func GatewayTimeout() *Status {
+func Status504() *Status {
 	return genericError(http.StatusGatewayTimeout)
 }
-func HTTPVersionNotSupported() *Status {
+func Status505() *Status {
 	return genericError(http.StatusHTTPVersionNotSupported)
 }
-func VariantAlsoNegotiates() *Status {
+func Status506() *Status {
 	return specificError(506, "Variant Also Negotiates")
 }
-func InsufficientStorage() *Status {
+func Status507() *Status {
 	return specificError(507, "Insufficient Storage")
 }
-func LoopDetected() *Status {
+func Status508() *Status {
 	return specificError(508, "Loop Detected")
 }
-func NetworkAuthenticationRequired() *Status {
+func Status511() *Status {
 	return specificError(511, "Network Authentication Required")
 }
 

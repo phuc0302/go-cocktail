@@ -7,6 +7,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/phuc0302/go-cocktail/common"
 )
 
 /** Cocktail represents the top level web application. */
@@ -131,7 +133,7 @@ func (c *Cocktail) serveRequest(context *Context) {
 	}
 
 	if !isAllowed {
-		context.RenderError(MethodNotAllowed())
+		context.RenderError(common.Status405())
 		return
 	}
 
@@ -149,19 +151,19 @@ func (c *Cocktail) serveRequest(context *Context) {
 	}
 
 	// Not Found
-	context.RenderError(NotFound())
+	context.RenderError(common.Status404())
 }
 func (c *Cocktail) serveResource(context *Context) {
 	// Condition validation: Only GET is accepted when request a static resources
 	if context.request.Method != GET {
-		context.RenderError(Forbidden())
+		context.RenderError(common.Status403())
 		return
 	}
 	resourcePath := context.request.URL.Path[1:]
 
 	// Condition validation: Check if file exist or not
 	if !FileExist(resourcePath) {
-		context.RenderError(NotFound())
+		context.RenderError(common.Status404())
 		return
 	}
 
@@ -170,14 +172,14 @@ func (c *Cocktail) serveResource(context *Context) {
 	defer f.Close()
 
 	if err != nil {
-		context.RenderError(NotFound())
+		context.RenderError(common.Status404())
 		return
 	}
 
 	// Condition validation: Only serve file, not directory
 	fi, _ := f.Stat()
 	if fi.IsDir() {
-		context.RenderError(Forbidden())
+		context.RenderError(common.Status403())
 		return
 	}
 
@@ -190,12 +192,12 @@ func (c *Cocktail) ServeHTTP(response http.ResponseWriter, request *http.Request
 	request.Method = strings.ToUpper(request.Method)
 
 	// Create context
-	context := Context{request: request, response: response}
+	context := &Context{request: request, response: response}
 	defer context.Recovery(c.Logger)
 
 	if len(c.Static) > 0 && strings.HasPrefix(request.URL.Path, c.Static) {
-		c.serveResource(&context)
+		c.serveResource(context)
 	} else {
-		c.serveRequest(&context)
+		c.serveRequest(context)
 	}
 }
