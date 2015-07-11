@@ -7,11 +7,17 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/phuc0302/go-cocktail/common"
 )
 
-/** Cocktail represents the top level web application. */
+const (
+	DELETE = "DELETE"
+	GET    = "GET"
+	HEAD   = "HEAD"
+	PATCH  = "PATCH"
+	POST   = "POST"
+	PUT    = "PUT"
+)
+
 type Cocktail struct {
 	Logger *log.Logger
 	Host   string
@@ -133,7 +139,7 @@ func (c *Cocktail) serveRequest(context *Context) {
 	}
 
 	if !isAllowed {
-		context.RenderError(common.Status405())
+		context.RenderError(Status405())
 		return
 	}
 
@@ -151,19 +157,19 @@ func (c *Cocktail) serveRequest(context *Context) {
 	}
 
 	// Not Found
-	context.RenderError(common.Status404())
+	context.RenderError(Status404())
 }
 func (c *Cocktail) serveResource(context *Context) {
 	// Condition validation: Only GET is accepted when request a static resources
 	if context.request.Method != GET {
-		context.RenderError(common.Status403())
+		context.RenderError(Status403())
 		return
 	}
 	resourcePath := context.request.URL.Path[1:]
 
 	// Condition validation: Check if file exist or not
 	if !FileExist(resourcePath) {
-		context.RenderError(common.Status404())
+		context.RenderError(Status404())
 		return
 	}
 
@@ -172,14 +178,14 @@ func (c *Cocktail) serveResource(context *Context) {
 	defer f.Close()
 
 	if err != nil {
-		context.RenderError(common.Status404())
+		context.RenderError(Status404())
 		return
 	}
 
 	// Condition validation: Only serve file, not directory
 	fi, _ := f.Stat()
 	if fi.IsDir() {
-		context.RenderError(common.Status403())
+		context.RenderError(Status403())
 		return
 	}
 

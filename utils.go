@@ -1,6 +1,7 @@
 package cocktail
 
 import (
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,9 +20,17 @@ func DirExist(dirPath string) bool {
 }
 
 /**
+ * Check if file exist at path or not.
+ */
+func FileExist(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return err == nil
+}
+
+/**
  * Extract input form.
  */
-func ExtractInputForm(request *http.Request) url.Values {
+func ParseForm(request *http.Request) url.Values {
 	err := request.ParseForm()
 	if err != nil {
 		panic(err)
@@ -32,7 +41,7 @@ func ExtractInputForm(request *http.Request) url.Values {
 /**
  * Extract multipart form.
  */
-func ExtractMultipartForm(request *http.Request) (url.Values, FileParams) {
+func ParseMultipartForm(request *http.Request) (url.Values, map[string][]*multipart.FileHeader) {
 	err := request.ParseMultipartForm(5 << 20) // 5 MB
 	if err != nil {
 		panic(err)
@@ -43,13 +52,5 @@ func ExtractMultipartForm(request *http.Request) (url.Values, FileParams) {
 	for k, v := range request.URL.Query() {
 		params[k] = v
 	}
-	return params, FileParams(request.MultipartForm.File)
-}
-
-/**
- * Check if file exist at path or not.
- */
-func FileExist(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return err == nil
+	return params, request.MultipartForm.File
 }

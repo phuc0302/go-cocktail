@@ -1,4 +1,4 @@
-package common
+package cocktail
 
 import "net/http"
 

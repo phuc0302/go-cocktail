@@ -2,7 +2,6 @@ package cocktail
 
 import (
 	"fmt"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -12,8 +11,8 @@ import (
 
 type Route struct {
 	Pattern string
-	regex   *regexp.Regexp
 
+	regex    *regexp.Regexp
 	handlers map[string]interface{}
 }
 
@@ -41,7 +40,7 @@ func (r *Route) AddHandler(method string, handler interface{}) {
 	r.handlers[method] = handler
 }
 
-func (r *Route) Match(method string, urlPath string) (bool, PathParams) {
+func (r *Route) Match(method string, urlPath string) (bool, map[string]string) {
 	// Condition validation: Match request url
 	matches := r.regex.FindStringSubmatch(urlPath)
 	if len(matches) == 0 || matches[0] != urlPath {
@@ -55,7 +54,7 @@ func (r *Route) Match(method string, urlPath string) (bool, PathParams) {
 	}
 
 	// Extract path params
-	params := make(PathParams)
+	params := make(map[string]string)
 	for i, name := range r.regex.SubexpNames() {
 		if len(name) > 0 {
 			params[name] = matches[i]
@@ -65,73 +64,22 @@ func (r *Route) Match(method string, urlPath string) (bool, PathParams) {
 }
 
 func (r *Route) InvokeHandler(c *Context) {
-	injector := r.prepareInjector(c.request, c.PathParams)
-	handler := r.handlers[c.request.Method]
-
-	// Call handler
-	injector.Map(c.request)
-	injector.Map(c.response)
-	injector.Map(c.request.Header)
-	_, err := injector.Invoke(handler)
-
-	// Condition validation: Validate error
-	if err != nil {
-		panic(err)
-	}
-
-	// if the handler returned something, write it to the http response
-	// if len(values) == 1 {
-	// 	var responseVal reflect.Value
-
-	// 	if len(values) > 1 && values[0].Kind() == reflect.Int {
-	// 		response.WriteHeader(int(values[0].Int()))
-	// 		responseVal = values[1]
-	// 	} else if len(values) > 0 {
-	// 		responseVal = values[0]
-	// 	}
-
-	// 	if canDeref(responseVal) {
-	// 		responseVal = responseVal.Elem()
-	// 	}
-
-	// 	if isByteSlice(responseVal) {
-	// 		response.Write(responseVal.Bytes())
-	// 	} else {
-	// 		response.Write([]byte(responseVal.String()))
-	// 	}
-	// }
-
-	// else {
-	// 	panic("Invalid return value, should be interface.")
-	// }
-}
-
-// MARK: Struct's private functions
-func (r *Route) prepareInjector(request *http.Request, pathParams PathParams) di.IInjector {
-	injector := di.Injector()
-
-	// Inject path params
-	if len(pathParams) > 0 {
-		injector.Map(pathParams)
-	}
-
-	// Inject params
-	switch request.Method {
+	switch c.request.Method {
 	case POST, PATCH:
-		contentType := strings.ToLower(request.Header.Get("CONTENT-TYPE"))
+		contentType := strings.ToLower(c.request.Header.Get("CONTENT-TYPE"))
 
 		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
-			params := ExtractInputForm(request)
+			params := ParseForm(c.request)
 			if len(params) > 0 {
-				injector.Map(params)
+				c.Queries = params
 			}
 		} else if strings.Contains(contentType, "multipart/form-data") {
-			params, fileParams := ExtractMultipartForm(request)
+			params, fileParams := ParseMultipartForm(c.request)
 			if len(fileParams) > 0 {
-				injector.Map(fileParams)
+				c.FileParams = fileParams
 			}
 			if len(params) > 0 {
-				injector.Map(params)
+				c.Queries = params
 			}
 		} else {
 			// Do nothing, let the runtime decide
@@ -139,11 +87,24 @@ func (r *Route) prepareInjector(request *http.Request, pathParams PathParams) di
 		break
 
 	default:
-		params := request.URL.Query()
+		params := c.request.URL.Query()
 		if len(params) > 0 {
-			injector.Map(params)
+			c.Queries = params
 		}
 		break
 	}
-	return injector
+
+	injector := di.Injector()
+	handler := r.handlers[c.request.Method]
+
+	// Call handler
+	injector.Map(c)
+	_, err := injector.Invoke(handler)
+
+	// Condition validation: Validate error
+	if err != nil {
+		panic(err)
+	}
 }
+
+// MARK: Struct's private functions

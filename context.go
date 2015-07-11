@@ -23,24 +23,6 @@ var (
 	slash     = []byte("/")
 )
 
-/**
- * IHandler represent a routing handler function.
- *
- *  Injector will inject these parameters dynamically as function's inputs
- *    + http.Header           (Optional)
- *    + *http.Request         (Optional)
- *    + http.ResponseWriter   (Optional)
- *
- *    + url.Values            (Optional)
- *    + cocktail.FileParams   (Optional)
- *    + cocktail.PathParams   (Optional)
- *
- *
- *  Function should only return one or two parameter(s)
- *    + cocktail.HttpStatus   (Optional)
- *    + struct or string      (Optional)
- *    + template              (Optional)  (html/template)
- */
 type Context struct {
 	Queries    url.Values
 	PathParams map[string]string
@@ -51,14 +33,14 @@ type Context struct {
 }
 
 // MARK: Struct's public functions
-func (c *Context) RenderError(status *common.Status) {
+func (c *Context) RenderError(status *Status) {
 	c.response.Header().Set("Content-Type", "application/problem+json")
 	c.response.WriteHeader(status.Status)
 
 	cause, _ := json.Marshal(status)
 	c.response.Write(cause)
 }
-func (c *Context) RenderJson(status *common.Status, model interface{}) {
+func (c *Context) RenderJson(status *Status, model interface{}) {
 	c.response.Header().Set("Content-Type", "application/json")
 	c.response.WriteHeader(status.Status)
 
@@ -68,7 +50,7 @@ func (c *Context) RenderJson(status *common.Status, model interface{}) {
 func (c *Context) RenderHtml(filePath string, model interface{}) {
 	tmpl, error := template.ParseFiles(filePath)
 	if error != nil {
-		c.RenderError(common.Status404())
+		c.RenderError(Status404())
 	} else {
 		tmpl.Execute(c.response, model)
 	}
@@ -83,7 +65,7 @@ func (c *Context) Recovery(logger *log.Logger) {
 		// Write error to file
 
 		// Return error
-		httpError := common.Status500()
+		httpError := Status500()
 		httpError.Detail = log
 		c.RenderError(httpError)
 	}
