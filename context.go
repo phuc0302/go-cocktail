@@ -33,6 +33,10 @@ type Context struct {
 }
 
 // MARK: Struct's public functions
+func (c *Context) FormFile(name string) (multipart.File, *multipart.FileHeader, error) {
+	return c.request.FormFile(name)
+}
+
 func (c *Context) RenderError(status *Status) {
 	c.response.Header().Set("Content-Type", "application/problem+json")
 	c.response.WriteHeader(status.Status)

@@ -75,6 +75,7 @@ func (r *Route) InvokeHandler(c *Context) {
 			}
 		} else if strings.Contains(contentType, "multipart/form-data") {
 			params, fileParams := ParseMultipartForm(c.request)
+
 			if len(fileParams) > 0 {
 				c.FileParams = fileParams
 			}
