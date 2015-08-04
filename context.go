@@ -26,50 +26,50 @@ var (
 type Context struct {
 	Queries    url.Values
 	PathParams map[string]string
-	FileParams map[string][]*multipart.FileHeader
 
-	request  *http.Request
-	response http.ResponseWriter
+	Request  *http.Request
+	Response http.ResponseWriter
 }
 
 // MARK: Struct's public functions
 func (c *Context) FormFile(name string) (multipart.File, *multipart.FileHeader, error) {
-	return c.request.FormFile(name)
+	return c.Request.FormFile(name)
 }
 
-func (c *Context) RenderError(status *Status) {
-	c.response.Header().Set("Content-Type", "application/problem+json")
-	c.response.WriteHeader(status.Status)
+func (c *Context) RenderError(status *common.Status) {
+	c.Response.Header().Set("Content-Type", "application/problem+json")
+	c.Response.WriteHeader(status.Status)
 
 	cause, _ := json.Marshal(status)
-	c.response.Write(cause)
+	c.Response.Write(cause)
 }
-func (c *Context) RenderJson(status *Status, model interface{}) {
-	c.response.Header().Set("Content-Type", "application/json")
-	c.response.WriteHeader(status.Status)
+func (c *Context) RenderJson(status *common.Status, model interface{}) {
+	c.Response.Header().Set("Content-Type", "application/json")
+	c.Response.WriteHeader(status.Status)
 
 	data, _ := json.Marshal(model)
-	c.response.Write(data)
+	c.Response.Write(data)
 }
 func (c *Context) RenderHtml(filePath string, model interface{}) {
 	tmpl, error := template.ParseFiles(filePath)
 	if error != nil {
-		c.RenderError(Status404())
+		c.RenderError(common.Status404())
 	} else {
-		tmpl.Execute(c.response, model)
+		tmpl.Execute(c.Response, model)
 	}
 }
 
 func (c *Context) Recovery(logger *log.Logger) {
 	if err := recover(); err != nil {
-		log, _ := common.CreateLog(c.request)
+		log, _ := common.CreateLog(c.Request)
+
 		log.Message = fmt.Sprintf("%s", err)
 		log.Trace = c.callStack(3)
 
 		// Write error to file
 
 		// Return error
-		httpError := Status500()
+		httpError := common.Status500()
 		httpError.Detail = log
 		c.RenderError(httpError)
 	}

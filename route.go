@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/phuc0302/go-cocktail-di"
+	"github.com/phuc0302/go-cocktail/utils"
 )
 
 type Route struct {
-	Pattern string
-
+	Pattern  string
 	regex    *regexp.Regexp
 	handlers map[string]interface{}
 }
@@ -64,21 +64,18 @@ func (r *Route) Match(method string, urlPath string) (bool, map[string]string) {
 }
 
 func (r *Route) InvokeHandler(c *Context) {
-	switch c.request.Method {
+	switch c.Request.Method {
 	case POST, PATCH:
-		contentType := strings.ToLower(c.request.Header.Get("CONTENT-TYPE"))
+		contentType := strings.ToLower(c.Request.Header.Get("CONTENT-TYPE"))
 
 		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
-			params := ParseForm(c.request)
+			params := utils.ParseForm(c.Request)
 			if len(params) > 0 {
 				c.Queries = params
 			}
 		} else if strings.Contains(contentType, "multipart/form-data") {
-			params, fileParams := ParseMultipartForm(c.request)
+			params := utils.ParseMultipartForm(c.Request)
 
-			if len(fileParams) > 0 {
-				c.FileParams = fileParams
-			}
 			if len(params) > 0 {
 				c.Queries = params
 			}
@@ -88,7 +85,7 @@ func (r *Route) InvokeHandler(c *Context) {
 		break
 
 	default:
-		params := c.request.URL.Query()
+		params := c.Request.URL.Query()
 		if len(params) > 0 {
 			c.Queries = params
 		}
@@ -96,7 +93,7 @@ func (r *Route) InvokeHandler(c *Context) {
 	}
 
 	injector := di.Injector()
-	handler := r.handlers[c.request.Method]
+	handler := r.handlers[c.Request.Method]
 
 	// Call handler
 	injector.Map(c)
