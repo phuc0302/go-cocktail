@@ -16,6 +16,16 @@ func Status201() *Status {
 	return genericStatus(http.StatusCreated)
 }
 
+func Status300() *Status {
+	return genericStatus(http.StatusMultipleChoices)
+}
+func Status301() *Status {
+	return genericStatus(http.StatusMovedPermanently)
+}
+func Status302() *Status {
+	return genericStatus(http.StatusFound)
+}
+
 func Status400() *Status {
 	return genericStatus(http.StatusBadRequest)
 }

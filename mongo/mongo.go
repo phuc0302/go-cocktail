@@ -21,7 +21,7 @@ var config *Config = nil
 var session *mgo.Session = nil
 
 /** Create session. */
-func CreateSession(c Config) {
+func ConnectMongo(c Config) {
 	if c.Host == "" || c.Port == "" || c.Database == "" {
 		return
 	}

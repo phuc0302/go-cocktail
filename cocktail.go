@@ -61,6 +61,22 @@ func Default() *Cocktail {
 	}
 }
 
+// MARK: http.Handler's members
+func (c *Cocktail) ServeHTTP(response http.ResponseWriter, request *http.Request) {
+	request.URL.Path = utils.FormatPath(request.URL.Path)
+	request.Method = strings.ToUpper(request.Method)
+
+	// Create context
+	context := CreateContext(request, response)
+	defer context.Recovery(c.Logger)
+
+	if len(c.StaticFolder) > 0 && strings.HasPrefix(request.URL.Path, c.StaticFolder) {
+		c.serveResource(context, request, response)
+	} else {
+		c.serveRequest(context, request, response)
+	}
+}
+
 // MARK: Struct's public functions
 func (c *Cocktail) Run() {
 	server := &http.Server{
@@ -74,15 +90,18 @@ func (c *Cocktail) Run() {
 	c.Logger.Printf("listening on %s:%s\n", c.Host, c.Port)
 	c.Logger.Fatalln(server.ListenAndServe())
 }
+func (c *Cocktail) RunTLS(certFile string, keyFile string) {
+	server := &http.Server{
+		Addr:           fmt.Sprintf("%s:%s", c.Host, c.Port),
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 5 << 10, // 512kb
+		Handler:        c,
+	}
 
-//func (engine *Engine) RunTLS(addr string, cert string, key string) {
-//	if gin_mode == debugCode {
-//		fmt.Println("[GIN-debug] Listening and serving HTTPS on " + addr)
-//	}
-//	if err := http.ListenAndServeTLS(addr, cert, key, engine); err != nil {
-//		panic(err)
-//	}
-//}
+	c.Logger.Printf("listening on %s:%s\n", c.Host, c.Port)
+	c.Logger.Fatalln(server.ListenAndServeTLS(certFile, keyFile))
+}
 
 func (c *Cocktail) Group(urlGroup string, function func(c *Cocktail)) {
 	c.groups = append(c.groups, urlGroup)
@@ -90,7 +109,6 @@ func (c *Cocktail) Group(urlGroup string, function func(c *Cocktail)) {
 
 	c.groups = c.groups[:len(c.groups)-1]
 }
-
 func (c *Cocktail) Delete(urlPath string, handler interface{}) {
 	c.addRoute(DELETE, urlPath, handler)
 }
@@ -119,8 +137,11 @@ func (c *Cocktail) addRoute(method string, pattern string, handler interface{}) 
 		for _, g := range c.groups {
 			groupPattern += g
 		}
-		pattern = groupPattern + pattern
+		pattern = fmt.Sprintf("%s%s", groupPattern, pattern)
 	}
+
+	// Format pattern before assigned to route
+	pattern = utils.FormatPath(pattern)
 
 	// Look for existing one before create new
 	for _, route := range c.routes {
@@ -140,25 +161,25 @@ func (c *Cocktail) addRoute(method string, pattern string, handler interface{}) 
 	c.routes = append(c.routes, *newRoute)
 }
 
-func (c *Cocktail) serveRequest(context *Context) {
+func (c *Cocktail) serveRequest(context *Context, request *http.Request, response http.ResponseWriter) {
 	// Condition validation: Validate request method
 	isAllowed := false
 	for _, allowedMethod := range c.methods {
-		if context.Request.Method == allowedMethod {
+		if request.Method == allowedMethod {
 			isAllowed = true
 			break
 		}
 	}
 
 	if !isAllowed {
-		context.RenderError(common.Status405())
+		context.OutputError(common.Status405())
 		return
 	}
 
 	// Condition validation: Find matched route
 	for _, route := range c.routes {
 		// Match url & extract path params
-		ok, pathParams := route.Match(context.Request.Method, context.Request.URL.Path)
+		ok, pathParams := route.Match(request.Method, request.URL.Path)
 		if !ok {
 			continue
 		}
@@ -169,19 +190,19 @@ func (c *Cocktail) serveRequest(context *Context) {
 	}
 
 	// Not Found
-	context.RenderError(common.Status404())
+	context.OutputError(common.Status404())
 }
-func (c *Cocktail) serveResource(context *Context) {
+func (c *Cocktail) serveResource(context *Context, request *http.Request, response http.ResponseWriter) {
 	// Condition validation: Only GET is accepted when request a static resources
-	if context.Request.Method != GET {
-		context.RenderError(common.Status403())
+	if request.Method != GET {
+		context.OutputError(common.Status403())
 		return
 	}
-	resourcePath := context.Request.URL.Path[1:]
+	resourcePath := request.URL.Path[1:]
 
 	// Condition validation: Check if file exist or not
 	if !utils.FileExisted(resourcePath) {
-		context.RenderError(common.Status404())
+		context.OutputError(common.Status404())
 		return
 	}
 
@@ -190,33 +211,17 @@ func (c *Cocktail) serveResource(context *Context) {
 	defer f.Close()
 
 	if err != nil {
-		context.RenderError(common.Status404())
+		context.OutputError(common.Status404())
 		return
 	}
 
 	// Condition validation: Only serve file, not directory
 	fi, _ := f.Stat()
 	if fi.IsDir() {
-		context.RenderError(common.Status403())
+		context.OutputError(common.Status403())
 		return
 	}
 
 	c.Logger.Printf("serve static: %s", resourcePath)
-	http.ServeContent(context.Response, context.Request, resourcePath, fi.ModTime(), f)
-}
-
-// MARK: http.Handler's members
-func (c *Cocktail) ServeHTTP(response http.ResponseWriter, request *http.Request) {
-	request.Method = strings.ToUpper(request.Method)
-	request.URL.Path = utils.FormatPath(request.URL.Path)
-
-	// Create context
-	context := &Context{Request: request, Response: response}
-	defer context.Recovery(c.Logger)
-
-	if len(c.StaticFolder) > 0 && strings.HasPrefix(request.URL.Path, c.StaticFolder) {
-		c.serveResource(context)
-	} else {
-		c.serveRequest(context)
-	}
+	http.ServeContent(response, request, resourcePath, fi.ModTime(), f)
 }

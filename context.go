@@ -27,41 +27,49 @@ type Context struct {
 	Queries    url.Values
 	PathParams map[string]string
 
-	Request  *http.Request
-	Response http.ResponseWriter
+	request  *http.Request
+	response http.ResponseWriter
+}
+
+// MARK: Struct's constructors
+func CreateContext(request *http.Request, response http.ResponseWriter) *Context {
+	return &Context{request: request, response: response}
 }
 
 // MARK: Struct's public functions
 func (c *Context) FormFile(name string) (multipart.File, *multipart.FileHeader, error) {
-	return c.Request.FormFile(name)
+	return c.request.FormFile(name)
 }
 
-func (c *Context) RenderError(status *common.Status) {
-	c.Response.Header().Set("Content-Type", "application/problem+json")
-	c.Response.WriteHeader(status.Status)
+func (c *Context) OutputError(status *common.Status) {
+	c.response.Header().Set("Content-Type", "application/problem+json")
+	c.response.WriteHeader(status.Status)
 
 	cause, _ := json.Marshal(status)
-	c.Response.Write(cause)
+	c.response.Write(cause)
 }
-func (c *Context) RenderJson(status *common.Status, model interface{}) {
-	c.Response.Header().Set("Content-Type", "application/json")
-	c.Response.WriteHeader(status.Status)
-
-	data, _ := json.Marshal(model)
-	c.Response.Write(data)
-}
-func (c *Context) RenderHtml(filePath string, model interface{}) {
+func (c *Context) OutputHtml(filePath string, model interface{}) {
 	tmpl, error := template.ParseFiles(filePath)
 	if error != nil {
-		c.RenderError(common.Status404())
+		c.OutputError(common.Status404())
 	} else {
-		tmpl.Execute(c.Response, model)
+		tmpl.Execute(c.response, model)
 	}
+}
+func (c *Context) OutputJson(status *common.Status, model interface{}) {
+	c.response.Header().Set("Content-Type", "application/json")
+	c.response.WriteHeader(status.Status)
+
+	data, _ := json.Marshal(model)
+	c.response.Write(data)
+}
+func (c *Context) OutputRedirect(status *common.Status, url string) {
+	http.Redirect(c.response, c.request, url, status.Status)
 }
 
 func (c *Context) Recovery(logger *log.Logger) {
 	if err := recover(); err != nil {
-		log, _ := common.CreateLog(c.Request)
+		log, _ := common.CreateLog(c.request)
 
 		log.Message = fmt.Sprintf("%s", err)
 		log.Trace = c.callStack(3)
@@ -71,7 +79,7 @@ func (c *Context) Recovery(logger *log.Logger) {
 		// Return error
 		httpError := common.Status500()
 		httpError.Detail = log
-		c.RenderError(httpError)
+		c.OutputError(httpError)
 	}
 }
 

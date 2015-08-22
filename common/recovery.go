@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type requestLog struct {
+type LogRequest struct {
 	Uri           string `json:"uri,omitempty"`
 	UserAgent     string `json:"user_agent,omitempty"`
 	HttpReferer   string `json:"http_referer,omitempty"`
@@ -15,17 +15,17 @@ type requestLog struct {
 	RequestBody   string `json:"request_body,omitempty"`
 }
 
-type recoveryLog struct {
-	Request requestLog `json:"request,omitempty"`
+type LogRecovery struct {
+	Request LogRequest `json:"request,omitempty"`
 	Date    string     `json:"date,omitempty"`
 	Message string     `json:"message,omitempty"`
 	Trace   []string   `json:"trace,omitempty"`
 }
 
 /** Create default recovery log with time stamp. */
-func CreateLog(request *http.Request) (*recoveryLog, time.Time) {
+func CreateLog(request *http.Request) (*LogRecovery, time.Time) {
 	end := time.Now().UTC()
-	log := recoveryLog{}
+	log := LogRecovery{}
 
 	log.Date = end.Format(time.RFC822)
 	log.Request.Uri = request.RequestURI

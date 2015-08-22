@@ -7,9 +7,9 @@ import (
 )
 
 func TestCreateSession(t *testing.T) {
-	CreateSession(Config{Host: "", Port: "", Database: "", Username: "", Password: ""})
-	CreateSession(Config{Host: "localhost", Port: "27017", Database: "concept"})
-	CreateSession(Config{Host: "localhost", Port: "27017", Database: "concept", Username: "", Password: ""})
+	ConnectMongo(Config{Host: "", Port: "", Database: "", Username: "", Password: ""})
+	ConnectMongo(Config{Host: "localhost", Port: "27017", Database: "concept"})
+	ConnectMongo(Config{Host: "localhost", Port: "27017", Database: "concept", Username: "", Password: ""})
 }
 
 func TestGetEventualSession(t *testing.T) {

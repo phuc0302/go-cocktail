@@ -35,8 +35,6 @@ func (r *Route) AddHandler(method string, handler interface{}) {
 	if reflect.TypeOf(handler).Kind() != reflect.Func {
 		panic("Request handler must be a function type.")
 	}
-
-	method = strings.ToUpper(method)
 	r.handlers[method] = handler
 }
 
@@ -64,36 +62,38 @@ func (r *Route) Match(method string, urlPath string) (bool, map[string]string) {
 }
 
 func (r *Route) InvokeHandler(c *Context) {
-	switch c.Request.Method {
-	case POST, PATCH:
-		contentType := strings.ToLower(c.Request.Header.Get("CONTENT-TYPE"))
+	switch c.request.Method {
 
-		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
-			params := utils.ParseForm(c.Request)
-			if len(params) > 0 {
-				c.Queries = params
-			}
-		} else if strings.Contains(contentType, "multipart/form-data") {
-			params := utils.ParseMultipartForm(c.Request)
-
-			if len(params) > 0 {
-				c.Queries = params
-			}
-		} else {
-			// Do nothing, let the runtime decide
-		}
-		break
-
-	default:
-		params := c.Request.URL.Query()
+	case GET:
+		params := c.request.URL.Query()
 		if len(params) > 0 {
 			c.Queries = params
 		}
 		break
+
+	case POST, PATCH:
+		contentType := strings.ToLower(c.request.Header.Get("CONTENT-TYPE"))
+
+		if strings.Contains(contentType, "application/x-www-form-urlencoded") {
+			params := utils.ParseForm(c.request)
+			if len(params) > 0 {
+				c.Queries = params
+			}
+		} else if strings.Contains(contentType, "multipart/form-data") {
+			params := utils.ParseMultipartForm(c.request)
+
+			if len(params) > 0 {
+				c.Queries = params
+			}
+		}
+		break
+
+	default:
+		break
 	}
 
 	injector := di.Injector()
-	handler := r.handlers[c.Request.Method]
+	handler := r.handlers[c.request.Method]
 
 	// Call handler
 	injector.Map(c)
