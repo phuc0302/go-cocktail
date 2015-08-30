@@ -78,7 +78,7 @@ func (c *Context) Recovery(logger *log.Logger) {
 
 		// Return error
 		httpError := common.Status500()
-		httpError.Detail = log
+		httpError.Description = log
 		c.OutputError(httpError)
 	}
 }

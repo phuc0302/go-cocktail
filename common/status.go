@@ -3,9 +3,9 @@ package common
 import "net/http"
 
 type Status struct {
-	Status int         `json:"status,omitempty"`
-	Title  string      `json:"title,omitempty"`
-	Detail interface{} `json:"detail,omitempty"`
+	Status      int         `json:"status,omitempty"`
+	Title       string      `json:"title,omitempty"`
+	Description interface{} `json:"description,omitempty"`
 }
 
 // MARK: Struct's constructors
@@ -139,15 +139,15 @@ func Status511() *Status {
 // MARK: Struct's private constructors
 func genericStatus(statusCode int) *Status {
 	return &Status{
-		Status: statusCode,
-		Title:  http.StatusText(statusCode),
-		Detail: http.StatusText(statusCode),
+		Status:      statusCode,
+		Title:       http.StatusText(statusCode),
+		Description: http.StatusText(statusCode),
 	}
 }
 func specificStatus(statusCode int, title string) *Status {
 	return &Status{
-		Status: statusCode,
-		Title:  title,
-		Detail: title,
+		Status:      statusCode,
+		Title:       title,
+		Description: title,
 	}
 }
