@@ -115,14 +115,14 @@ func (c *Client) connectAndWrite(envelop []byte) (*APNsResponse, error) {
 	select {
 	case r := <-responseChannel:
 		response = APNsResponse{
-			Success:       false,
+			Success:       true,
 			AppleResponse: APNsResponses[r[1]],
 			//			Error:         errors.New(resp.AppleResponse),
 		}
 
 	case <-timeoutChannel:
 		response = APNsResponse{
-			Success: true,
+			Success: false,
 		}
 	}
 	return &response, err
