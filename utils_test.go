@@ -1,4 +1,4 @@
-package utils
+package cocktail
 
 import "testing"
 
@@ -57,10 +57,10 @@ func TestCleanPath(t *testing.T) {
 	}
 
 	for _, test := range data {
-		if s := cleanPath(test.path); s != test.result {
+		if s := FormatPath(test.path); s != test.result {
 			t.Errorf("FormatPath(%q) = %q, want %q", test.path, s, test.result)
 		}
-		if s := cleanPath(test.result); s != test.result {
+		if s := FormatPath(test.result); s != test.result {
 			t.Errorf("FormatPath(%q) = %q, want %q", test.result, s, test.result)
 		}
 	}

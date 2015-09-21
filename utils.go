@@ -1,4 +1,4 @@
-package utils
+package cocktail
 
 import (
 	"net/http"
@@ -34,10 +34,10 @@ func ParseForm(request *http.Request) url.Values {
 
 /** Extract multipart form. */
 func ParseMultipartForm(request *http.Request) url.Values {
-	//	err := request.ParseMultipartForm(10 << 20) // 10 MB
-	//	if err != nil {
-	//		panic(err)
-	//	}
+	err := request.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		panic(err)
+	}
 
 	// request.URL.Query()
 	params := url.Values(request.MultipartForm.Value)

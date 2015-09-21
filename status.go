@@ -1,11 +1,13 @@
-package common
+package cocktail
 
 import "net/http"
 
 type Status struct {
-	Status      int         `json:"status,omitempty"`
-	Title       string      `json:"title,omitempty"`
-	Description interface{} `json:"description,omitempty"`
+	Status           int    `json:"status,omitempty"`
+	Error            string `json:"error,omitempty"`
+	ErrorDescription string `json:"error_description,omitempty"`
+
+	StackTrace interface{} `json:"stack_trace,omitempty"`
 }
 
 // MARK: Struct's constructors
@@ -14,6 +16,21 @@ func Status200() *Status {
 }
 func Status201() *Status {
 	return genericStatus(http.StatusCreated)
+}
+func Status202() *Status {
+	return genericStatus(http.StatusAccepted)
+}
+func Status203() *Status {
+	return genericStatus(http.StatusNonAuthoritativeInfo)
+}
+func Status204() *Status {
+	return genericStatus(http.StatusNoContent)
+}
+func Status205() *Status {
+	return genericStatus(http.StatusResetContent)
+}
+func Status206() *Status {
+	return genericStatus(http.StatusPartialContent)
 }
 
 func Status300() *Status {
@@ -24,6 +41,18 @@ func Status301() *Status {
 }
 func Status302() *Status {
 	return genericStatus(http.StatusFound)
+}
+func Status303() *Status {
+	return genericStatus(http.StatusSeeOther)
+}
+func Status304() *Status {
+	return genericStatus(http.StatusNotModified)
+}
+func Status305() *Status {
+	return genericStatus(http.StatusUseProxy)
+}
+func Status307() *Status {
+	return genericStatus(http.StatusTemporaryRedirect)
 }
 
 func Status400() *Status {
@@ -80,6 +109,9 @@ func Status416() *Status {
 func Status417() *Status {
 	return genericStatus(http.StatusExpectationFailed)
 }
+func Status418() *Status {
+	return genericStatus(http.StatusTeapot)
+}
 func Status422() *Status {
 	return specificStatus(422, "Unprocessable Entity")
 }
@@ -92,7 +124,7 @@ func Status424() *Status {
 func Status425() *Status {
 	return specificStatus(425, "Unordered Collection")
 }
-func UpgradeRequired() *Status {
+func Status426() *Status {
 	return specificStatus(426, "Upgrade Required")
 }
 func Status428() *Status {
@@ -139,15 +171,15 @@ func Status511() *Status {
 // MARK: Struct's private constructors
 func genericStatus(statusCode int) *Status {
 	return &Status{
-		Status:      statusCode,
-		Title:       http.StatusText(statusCode),
-		Description: http.StatusText(statusCode),
+		Status:           statusCode,
+		Error:            http.StatusText(statusCode),
+		ErrorDescription: http.StatusText(statusCode),
 	}
 }
 func specificStatus(statusCode int, title string) *Status {
 	return &Status{
-		Status:      statusCode,
-		Title:       title,
-		Description: title,
+		Status:           statusCode,
+		Error:            title,
+		ErrorDescription: title,
 	}
 }

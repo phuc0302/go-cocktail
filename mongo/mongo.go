@@ -22,7 +22,7 @@ var session *mgo.Session = nil
 
 /** Create session. */
 func ConnectMongo(c Config) {
-	if c.Host == "" || c.Port == "" || c.Database == "" {
+	if len(c.Host) == 0 || len(c.Port) == 0 || len(c.Database) == 0 {
 		return
 	}
 
