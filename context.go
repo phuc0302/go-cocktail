@@ -58,6 +58,7 @@ func (c *Context) OutputError(status *Status) {
 	cause, _ := json.Marshal(status)
 	c.response.Write(cause)
 }
+
 func (c *Context) OutputRedirect(status *Status, url string) {
 	http.Redirect(c.response, c.request, url, status.Status)
 }
@@ -69,6 +70,7 @@ func (c *Context) OutputJson(status *Status, model interface{}) {
 	data, _ := json.Marshal(model)
 	c.response.Write(data)
 }
+
 func (c *Context) OutputHtml(filePath string, model interface{}) {
 	tmpl, error := template.ParseFiles(filePath)
 	if error != nil {
