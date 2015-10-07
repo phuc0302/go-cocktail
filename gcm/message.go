@@ -1,25 +1,77 @@
 package gcm
 
 type Message struct {
-	RegistrationIds       []string `json:"registration_ids"`
-	CollapseKey           string   `json:"collapse_key,omitempty"`            // Identify a group of messages (e.g., with collapse_key: "Updates Available") that can be collapsed, so that only the last message gets sent.
-	Priority              string   `json:"priority,omitempty"`                // Valid values are "normal" and "high". When a message is sent with high priority, it is sent immediately, and the app can wake a sleeping device.
-	RestrictedPackageName string   `json:"restricted_package_name,omitempty"` // Specify the package name of the application where the registration tokens must match in order to receive the message.
+	RegistrationIds []string `json:"registration_ids"`
+	CollapseKey     string   `json:"collapse_key,omitempty"`
+	Priority        string   `json:"priority,omitempty"`
+	DryRun          bool     `json:"dry_run,omitempty"`
+	DelayWhileIdle  bool     `json:"delay_while_idle,omitempty"`
 
-	DryRun         bool `json:"dry_run,omitempty"`          // If set to true, allows developers to test a request without actually sending a message.
-	DelayWhileIdle bool `json:"delay_while_idle,omitempty"` // If set to true, it indicates that the message should not be sent until the device becomes active.
+	Data map[string]interface{} `json:"data,omitempty"`
 
-	Data map[string]interface{} `json:"data,omitempty"` // Specify the custom key-value pairs of the message's payload.
+	RestrictedPackageName string `json:"restricted_package_name,omitempty"`
 }
 
-//type IndividualMessage struct {
-//	Message
-//}
+// MARK: Struct's constructors
+func CreateMessage(registrationIds []string) *Message {
+	/* Condition validation */
+	if len(registrationIds) == 0 {
+		return nil
+	}
 
-//type MulticastMessage struct {
-//	Message
-//}
+	return &Message{
+		RegistrationIds: registrationIds,
+		Priority:        "high",
 
-func NewMessage(data map[string]interface{}, regIDs ...string) *Message {
-	return &Message{RegistrationIds: regIDs, Data: data}
+		Data: make(map[string]interface{}),
+	}
+}
+
+/**
+ * Enforce the message. Split original message into multiple messages if required.
+ */
+func (m *Message) Encode() []*Message {
+	length := len(m.RegistrationIds)
+	maxIds := 1000
+
+	if length <= maxIds {
+		return []*Message{m}
+	} else {
+		// Calculate step
+		remain := length % maxIds
+		counter := (length - remain) / maxIds
+		if remain > 0 {
+			counter++
+		}
+
+		// Create message collection
+		messages := make([]*Message, counter)
+		for i := 0; i < counter; i++ {
+			strIdx := i * maxIds
+			endIdx := strIdx + maxIds
+
+			/* Condition validation: Validate upper bound */
+			if endIdx > length {
+				endIdx = length
+			}
+			ids := m.RegistrationIds[strIdx:endIdx]
+
+			message := *m
+			message.RegistrationIds = ids
+
+			messages[i] = &message
+		}
+		return messages
+	}
+}
+
+/**
+ * Add custom key-value pair to the message's payload.
+ */
+func (m *Message) SetField(key string, value interface{}) {
+	/* Condition validation */
+	if len(key) == 0 || value == nil {
+		return
+	}
+	m.Data[key] = value
 }

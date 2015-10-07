@@ -2,8 +2,6 @@ package gcm
 
 const (
 	GATEWAY = "https://android.googleapis.com/gcm/send"
-	HIGH    = "high"
-	NORMAL  = "normal"
 )
 
 const (
